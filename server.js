@@ -10,7 +10,6 @@ import connectDB from './db.js';
 // dotenv.config();
 const app = express();
 
-console.log(typeof process.env.MONGOURI);
 connectDB();
 //Define Routes
 app.use('/api/v1/admin', admin); //done
