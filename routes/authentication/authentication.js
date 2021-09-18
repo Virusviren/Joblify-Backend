@@ -50,15 +50,21 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
     const { name, surname, email, password } = req.body;
+    try {
+      let candidate = new Candidate({
+        email: email,
+        password: password,
+        personalInfo: { name: name, surname: surname },
+      });
 
-    let candidate = new Candidate({
-      email: email,
-      password: password,
-      personalInfo: { name: name, surname: surname },
-    });
-
-    await candidate.save();
-    res.send('Candidate Saved');
+      const salt = await bcrypt.genSalt(10);
+      candidate.password = await bcrypt.hash(password, salt);
+      await candidate.save();
+      res.send('Candidate Saved');
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send('Server Error');
+    }
   }
 );
 
