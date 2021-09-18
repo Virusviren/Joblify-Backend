@@ -7,7 +7,7 @@ import candidate from './routes/candidate/candidate.js';
 import hr from './routes/hr/hr.js';
 import jobs from './routes/jobs/jobs.js';
 import connectDB from './db.js';
-// dotenv.config();
+
 const app = express();
 
 connectDB();
