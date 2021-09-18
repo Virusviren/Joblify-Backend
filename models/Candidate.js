@@ -6,16 +6,16 @@ const CandidateSchema = mongoose.Schema({
   personalInfo: {
     name: { type: String, required: true },
     surname: { type: String, required: true },
-    dateOfBirth: { type: Date, required: true },
-    citizenship: { type: String, required: true },
-    address: { type: String, required: true },
-    mobileNumber: { type: String, required: true },
+    dateOfBirth: Date,
+    citizenship: String,
+    address: String,
+    mobileNumber: String,
   },
   education: [
     {
       level: { type: String, required: true },
       universityName: { type: String, required: true },
-      startingDate: { type: Date, required: true },
+      startingDate: Date,
       endingDate: { type: Date, required: false },
     },
   ],

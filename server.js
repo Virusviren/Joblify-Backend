@@ -11,6 +11,11 @@ import connectDB from './db.js';
 const app = express();
 
 connectDB();
+
+// Init MiddleWare
+
+app.use(express.json({ extended: false }));
+
 //Define Routes
 app.use('/api/v1/admin', admin); //done
 app.use('/api/v1/', authentication); // done
