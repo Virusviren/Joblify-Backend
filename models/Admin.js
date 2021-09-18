@@ -1,11 +1,3 @@
-Admin = {
-  name: String,
-  surname: String,
-  email: Email,
-  password: String,
-  role: Admin,
-};
-
 import mongoose from 'mongoose';
 
 const AdminSchema = mongoose.Schema({
