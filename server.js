@@ -7,11 +7,15 @@ import candidate from './routes/candidate/candidate.js';
 import hr from './routes/hr/hr.js';
 import jobs from './routes/jobs/jobs.js';
 import connectDB from './db.js';
-// dotenv.config();
+
 const app = express();
 
-console.log(typeof process.env.MONGOURI);
 connectDB();
+
+// Init MiddleWare
+
+app.use(express.json({ extended: false }));
+
 //Define Routes
 app.use('/api/v1/admin', admin); //done
 app.use('/api/v1/', authentication); // done
