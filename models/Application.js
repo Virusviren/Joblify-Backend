@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Candidate from './Candidate';
 import Job from './Job';
 
-const ApplicationSchema = {
+const ApplicationSchema = mongoose.Schema({
   applicationId: { type: String, required: true },
   candidateId: { type: mongoose.ObjectId, ref: Candidate },
   jobId: { type: mongoose.ObjectId, ref: Job },
@@ -43,7 +43,7 @@ const ApplicationSchema = {
     profilePhoto: String,
     email: { type: String, required: true },
   },
-};
+});
 
 const Application = mongoose.model('Application', ApplicationSchema);
 

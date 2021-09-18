@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const HrSchema = {
+const HrSchema = mongoose.Schema({
   email: { type: String, required: true },
   password: { type: String, required: true },
   personalInfo: {
@@ -16,7 +16,7 @@ const HrSchema = {
     },
   ],
   jobsPosted: [{ jobId: { type: String, required: true } }],
-};
+});
 
 const Hr = mongoose.model('Hr', HrSchema);
 export default Hr;

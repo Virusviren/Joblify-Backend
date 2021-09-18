@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const CandidateSchema = {
+const CandidateSchema = mongoose.Schema({
   email: { type: String, required: true },
   password: { type: String, required: true },
   personalInfo: {
@@ -35,7 +35,7 @@ const CandidateSchema = {
   profilePhoto: String,
   profilePhoto: String,
   appliedJobs: [{ applicationId: String, jobId: String }],
-};
+});
 
 const Candidate = mongoose.model('Candidate', CandidateSchema);
 export default Candidate;
