@@ -13,6 +13,7 @@ router.get('/user', (req, res) => {
 // Login the user and hr
 router.post(
   '/login',
+  // middleware for checking the response body by express-validator
   [
     check('email', 'Please Enter the Email').isEmail(),
     check(
@@ -51,12 +52,14 @@ router.post(
     }
     const { name, surname, email, password } = req.body;
     try {
+      // setting the new variable with the Candidate model to save in database
       let candidate = new Candidate({
         email: email,
         password: password,
         personalInfo: { name: name, surname: surname },
       });
 
+      // Salting and hashing the password before saving it to database
       const salt = await bcrypt.genSalt(10);
       candidate.password = await bcrypt.hash(password, salt);
       await candidate.save();
@@ -73,7 +76,7 @@ router.post('/forgot-password/:email', (req, res) => {
   res.send('forgot password link to email');
 });
 
-// Reseting the password
+// Resetting the password
 router.patch('/forgot-password/reset/:email', (req, res) => {
   res.send('Link to edit password');
 });
