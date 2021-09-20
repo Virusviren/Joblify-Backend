@@ -38,8 +38,9 @@ router.post(
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
           const payload = {
-            candidate: {
+            userInfo: {
               id: user.id,
+              type: typeOfUser,
             },
           };
           jwt.sign(
@@ -61,8 +62,9 @@ router.post(
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
           const payload = {
-            hr: {
+            userInfo: {
               id: user.id,
+              type: typeOfUser,
             },
           };
           jwt.sign(
