@@ -6,16 +6,14 @@ const HrSchema = mongoose.Schema({
   personalInfo: {
     name: { type: String, required: true },
     surname: { type: String, required: true },
-    mobileNumber: { type: String, required: true },
+    mobileNumber: String,
   },
-  profilePhoto: { type: String, required: true },
-  workDetails: [
-    {
-      position: { type: String, required: true },
-      companyName: { type: String, required: true },
-    },
-  ],
-  jobsPosted: [{ jobId: { type: String, required: true } }],
+  profilePhoto: String,
+  workDetails: {
+    position: { type: String },
+    companyName: { type: String, default: 'Joblify' },
+  },
+  jobsPosted: [],
 });
 
 const Hr = mongoose.model('Hr', HrSchema);
