@@ -1,3 +1,5 @@
+//for registration route
+import Admin from '../models/Admin.js';
 import Candidate from '../models/Candidate.js';
 import Hr from '../models/Hr.js';
 
@@ -25,5 +27,18 @@ export const IsUser = async (req, res, next) => {
     }
   } catch (error) {
     next(err);
+  }
+};
+
+export const AdminExist = async (req, res, next) => {
+  try {
+    let admin = await Admin.findOne({ email: req.body.email });
+    if (!admin) {
+      next();
+    } else {
+      res.send('admin exist');
+    }
+  } catch (error) {
+    next(error);
   }
 };

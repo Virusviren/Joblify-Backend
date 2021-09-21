@@ -52,10 +52,10 @@ export const authAdmin = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWTSECRET);
     req.userInfo = decoded.userInfo;
-    if (req.userInfo.type === 'Candidate') {
+    if (req.userInfo.type === 'Admin') {
       next();
     } else {
-      res.status(401).json({ msg: 'Not a Candidate' });
+      res.status(401).json({ msg: 'Not a Admin' });
     }
   } catch (error) {
     console.log(error.message);

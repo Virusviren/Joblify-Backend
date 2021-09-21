@@ -1,9 +1,12 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import Hr from '../../models/Hr.js';
 import Admin from '../../models/Admin.js';
 import bcrypt from 'bcryptjs';
 import { check, validationResult } from 'express-validator';
 import { IsAdmin } from '../../middlewares/typeOfUser.js';
+import { AdminExist } from '../../middlewares/checkUserExist.js';
+import { authAdmin } from '../../middlewares/auth.js';
 const router = express.Router();
 
 // Get profile details (get personal info) (get)
@@ -14,7 +17,7 @@ router.get('/profile/:adminId', (req, res) => {
 
 // Get all hrs list (get)
 
-router.get('/hr', (req, res) => {
+router.get('/hr-list', authAdmin, (req, res) => {
   res.send('All Hr list');
 });
 
@@ -22,7 +25,7 @@ router.get('/hr', (req, res) => {
 
 router.post(
   '/add-hr',
-  IsAdmin,
+  authAdmin,
   [
     check('name', 'Please enter your name').notEmpty(),
     check('surname', 'Please enter the surname').notEmpty(),
@@ -75,12 +78,47 @@ router.delete('/remove/:hrId', (req, res) => {
 
 //Admin login
 
-router.post('/admin-login', IsAdmin, (req, res) => {});
+router.post('/admin-login', IsAdmin, async (req, res) => {
+  let { email, password, typeOfUser } = req.body;
+  try {
+    if (typeOfUser === 'Admin') {
+      let admin = await Admin.findOne({ email: email });
+      const isMatch = await bcrypt.compare(password, admin.password);
+      if (isMatch) {
+        const payload = {
+          userInfo: {
+            id: admin.id,
+            type: typeOfUser,
+          },
+        };
+        jwt.sign(
+          payload,
+          process.env.JWTSECRET,
+          {
+            expiresIn: 36000,
+          },
+          (err, token) => {
+            if (err) throw err;
+            res.json({ token });
+          }
+        );
+      } else {
+        res.send('Invalid Password');
+      }
+    } else {
+      res.send('No User not found');
+    }
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 // Add Admin
 
 router.post(
   '/admin-registration',
+  AdminExist,
   [
     check('name', 'Please enter your name').notEmpty(),
     check('surname', 'Please enter the surname').notEmpty(),

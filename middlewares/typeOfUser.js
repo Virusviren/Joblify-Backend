@@ -1,3 +1,4 @@
+// for login routes
 import Candidate from '../models/Candidate.js';
 import Hr from '../models/Hr.js';
 import Admin from '../models/Admin.js';
@@ -29,7 +30,7 @@ export const IsAdmin = async (req, res, next) => {
       req.body.typeOfUser = 'Admin';
       next();
     } else {
-      res.send('Incorrect Credential');
+      res.send('Invalid credentials');
     }
   } catch (error) {
     next(error);
