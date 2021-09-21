@@ -8,7 +8,7 @@ import { WhichUser } from '../../middlewares/typeOfUser.js';
 import Hr from '../../models/Hr.js';
 const router = express.Router();
 
-// get looged in user
+// get logged in user
 router.get('/user', (req, res) => {
   res.json({ Admin });
 });
