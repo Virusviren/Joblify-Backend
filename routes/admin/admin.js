@@ -66,13 +66,13 @@ router.post(
 
 // Edit hr details (patch)
 
-router.patch('/edit-hr/:hrId', (req, res) => {
+router.patch('/edit-hr/:hrId', authAdmin, (req, res) => {
   res.send('Edit HR details');
 });
 
 // Remove hr (delete)
 
-router.delete('/remove/:hrId', (req, res) => {
+router.delete('/remove/:hrId', authAdmin, (req, res) => {
   res.send('Delete hr');
 });
 
