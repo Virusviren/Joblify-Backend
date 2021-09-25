@@ -11,14 +11,16 @@ const router = express.Router();
 
 // Get profile details (get personal info) (get)
 
-router.get('/profile/:adminId', (req, res) => {
-  res.send('Admin details');
+router.get('/profile', authAdmin, async (req, res) => {
+  let adminDetails = await Admin.findById(req.userInfo.id, { password: 0 });
+  res.send(adminDetails);
 });
 
 // Get all hrs list (get)
 
-router.get('/hr-list', authAdmin, (req, res) => {
-  res.send('All Hr list');
+router.get('/hr-list', authAdmin, async (req, res) => {
+  let listOfHr = await Hr.find({}, { password: 0 });
+  res.send(listOfHr);
 });
 
 // Add new hr (post)
@@ -66,14 +68,34 @@ router.post(
 
 // Edit hr details (patch)
 
-router.patch('/edit-hr/:hrId', authAdmin, (req, res) => {
-  res.send('Edit HR details');
+router.patch('/edit-hr/:hrId', authAdmin, async (req, res) => {
+  try {
+    const id = req.params.hrId;
+    const { name, surname, email, position } = req.body;
+    const updates = {
+      personalInfo: {
+        name: name,
+        surname: surname,
+      },
+      email: email,
+      workDetails: {
+        position: position,
+      },
+    };
+    const updated = await Hr.findByIdAndUpdate(id, updates, {
+      new: true,
+    });
+    res.send(updated);
+  } catch (error) {
+    res.send(500).send({ message: error.message });
+  }
 });
 
 // Remove hr (delete)
 
-router.delete('/remove/:hrId', authAdmin, (req, res) => {
-  res.send('Delete hr');
+router.delete('/remove/:hrId', authAdmin, async (req, res) => {
+  await Hr.findByIdAndDelete(req.params.hrId);
+  res.send('Deleted');
 });
 
 //Admin login

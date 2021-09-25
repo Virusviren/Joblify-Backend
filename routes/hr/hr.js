@@ -1,10 +1,15 @@
 import express from 'express';
+import { authHr } from '../../middlewares/auth.js';
+import Hr from '../../models/Hr.js';
 
 const router = express.Router();
 
 // Get profile details (get personal info) (get)
-router.get('/profile/:hrId', (req, res) => {
-  res.send('Get the information of the hr');
+router.get('/profile', authHr, async (req, res) => {
+  console.log(req.body);
+  let hrDetails = await Hr.findById(req.userInfo.id, { password: 0 });
+  console.log(hrDetails);
+  res.send(hrDetails);
 });
 
 // Edit text fields (personal info) (patch)
