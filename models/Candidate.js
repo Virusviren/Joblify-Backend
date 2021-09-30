@@ -22,11 +22,10 @@ const CandidateSchema = mongoose.Schema({
 
   workExperience: [
     {
-      id: { type: String, required: true },
       companyName: { type: String, required: true },
       position: { type: String, required: true },
       description: { type: String, required: true },
-      endingDate: { type: Date, required: true },
+      endingDate: String,
       startingDate: { type: Date, required: true },
     },
   ],

@@ -1,5 +1,5 @@
 import express from 'express';
-import { BUCKET_NAME, cpUpload, s3 } from '../../aws-storage/index.js';
+import { BUCKET_NAME, cpUpload, s3, upload } from '../../aws-storage/index.js';
 import { authCandidate } from '../../middlewares/auth.js';
 import Candidate from '../../models/Candidate.js';
 import mongoose from 'mongoose';
@@ -15,12 +15,6 @@ router.get('/profile', authCandidate, async (req, res) => {
   } catch (error) {
     res.status(404).send('Not Found');
   }
-});
-
-//Get all applications (get)
-
-router.get('/applications', authCandidate, (req, res) => {
-  res.send('Get the list of the job where the candidate applied');
 });
 
 // Edit personalInfo (patch)
@@ -120,26 +114,142 @@ router.delete(
   '/profile/edit-education/:educationItemId',
   authCandidate,
   async (req, res) => {
+    try {
+      let docId = req.userInfo.id;
+      let itemId = req.params.educationItemId;
+      console.log({ docId, itemId });
+      const updates = { $pull: { education: { _id: itemId } } };
+      await Candidate.findByIdAndUpdate(docId, updates, {
+        new: true,
+      });
+      res.status(202).send('Deleted');
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send('Internal Server Error');
+    }
+  }
+);
+
+// Add work Experience
+router.post('/profile/edit-workExperience', authCandidate, async (req, res) => {
+  try {
+    let { companyName, position, startingDate, description, endingDate } =
+      req.body;
     let docId = req.userInfo.id;
-    let itemId = req.params.educationItemId;
-    console.log({ docId, itemId });
-    const updates = { $pull: { education: { _id: itemId } } };
-    await Candidate.findByIdAndUpdate(docId, updates, {
+    let updates = {
+      $push: {
+        workExperience: {
+          companyName: companyName,
+          description: description,
+          position: position,
+          startingDate: startingDate,
+          endingDate: endingDate,
+        },
+      },
+    };
+
+    const updated = await Candidate.findByIdAndUpdate(docId, updates, {
       new: true,
     });
-    res.send('done');
+    console.log(updated);
+    res.status(202).send(updated);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
   }
-);
+});
 
-// Edit image (patch)
+// Edit particular work experience item
 
-router.delete(
-  '/profile/edit-education/:educationItemId',
+router.patch(
+  '/profile/edit-workExperience/:workExperienceItemId',
   authCandidate,
-  (req, res) => {
-    res.send('Delete the education item');
+  async (req, res) => {
+    try {
+      let { companyName, position, startingDate, description, endingDate } =
+        req.body;
+      let docId = req.userInfo.id;
+      let itemId = req.params.workExperienceItemId;
+      console.log(itemId);
+      const updates = {
+        $set: {
+          'workExperience.$.companyName': companyName,
+          'workExperience.$.position': position,
+          'workExperience.$.description': description,
+          'workExperience.$.startingDate': startingDate,
+          'workExperience.$.endingDate': endingDate,
+        },
+      };
+      const updated = await Candidate.findOneAndUpdate(
+        { _id: docId, workExperience: { $elemMatch: { _id: itemId } } },
+        updates,
+        {
+          new: true,
+        }
+      );
+      res.status(202).send(updated);
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send('Internal Server Error');
+    }
   }
 );
+
+// Remove the particular work experience
+router.delete(
+  '/profile/edit-workExperience/:workExperienceItemId',
+  authCandidate,
+  async (req, res) => {
+    try {
+      let docId = req.userInfo.id;
+      let itemId = req.params.workExperienceItemId;
+      console.log({ docId, itemId });
+      const updates = { $pull: { workExperience: { _id: itemId } } };
+      await Candidate.findByIdAndUpdate(docId, updates, {
+        new: true,
+      });
+      res.status(202).send('Deleted');
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send('Internal Server Error');
+    }
+  }
+);
+
+// Edit Skills
+router.patch('/profile/edit-skills', authCandidate, async (req, res) => {
+  try {
+    let skills = req.body.skills;
+    console.log(skills);
+    let docId = req.userInfo.id;
+    const firstUpdate = {
+      $set: {
+        skills: [],
+      },
+    };
+    await Candidate.findByIdAndUpdate(docId, firstUpdate, {
+      new: true,
+    });
+
+    const updates = {
+      $push: {
+        skills: skills,
+      },
+    };
+    const updated = await Candidate.findByIdAndUpdate(docId, updates, {
+      new: true,
+    });
+    res.status(202).send(updated);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Edit video files
+router.patch('/profile/edit/video', authCandidate, (req, res) => {
+  res.send('Edit  profile photo');
+});
 
 // Edit files (patch)
 router.patch('/profile/edit/files/:filetype', authCandidate, (req, res) => {
@@ -147,6 +257,18 @@ router.patch('/profile/edit/files/:filetype', authCandidate, (req, res) => {
     'edit the file of the candidate depending on the filetype (CV/CoverLetter) '
   );
 });
+
+// Edit image (patch)
+
+router.patch(
+  '/profile/edit/profile-photo',
+  authCandidate,
+  upload.single('Image'),
+  async (req, res) => {
+    console.log(req);
+    res.send('Edit  profile photo');
+  }
+);
 
 // Submit application (post)
 router.post('/submit/', authCandidate, (req, res) => {
@@ -156,6 +278,12 @@ router.post('/submit/', authCandidate, (req, res) => {
 // Withdraw application (patch)
 router.patch('/withdraw/:applicationId', authCandidate, (req, res) => {
   res.send('Withdraw the application');
+});
+
+//Get all applications (get)
+
+router.get('/applications', authCandidate, (req, res) => {
+  res.send('Get the list of the job where the candidate applied');
 });
 
 router.post('/aws-test', cpUpload, async (req, res) => {
