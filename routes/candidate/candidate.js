@@ -4,6 +4,7 @@ import { BUCKET_NAME, s3 } from '../../aws-storage/awsconfig.js';
 import {
   documentCandidate,
   imageUpload,
+  videoUpload,
 } from '../../middlewares/multerFileCheck.js';
 import { authCandidate } from '../../middlewares/auth.js';
 import Candidate from '../../models/Candidate.js';
@@ -252,8 +253,40 @@ router.patch('/profile/edit-skills', authCandidate, async (req, res) => {
 });
 
 // Edit video files
-router.patch('/profile/edit/video', authCandidate, (req, res) => {
-  res.send('Edit  profile photo');
+router.patch('/profile/edit/video', authCandidate, async (req, res) => {
+  try {
+    videoUpload(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+        console.log(err.message);
+        res.status(413).send('PayLoad Too Large');
+      } else {
+        const { buffer } = req.file;
+        const profileVideo = {
+          Bucket: `${BUCKET_NAME}/profile_video`,
+          Key: `${req.userInfo.id}`,
+          Body: buffer,
+          ACL: 'public-read',
+        };
+        await s3.upload(profileVideo, async (error, data) => {
+          if (error) {
+            console.log(error);
+          } else {
+            const updated = await Candidate.findByIdAndUpdate(
+              req.userInfo.id,
+              {
+                infoVideo: data.Location,
+              },
+              { new: true }
+            );
+            res.status(202).send(updated);
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // Edit files (patch)
@@ -276,11 +309,9 @@ router.patch(
           console.log(err.message);
           res.status(413).send('PayLoad Too Large');
         } else {
-          console.log(req.file);
           const { buffer, mimetype } = req.file;
           const fileType = mimetype.split('/').pop(); // if wants to specify the type of the file in the aws. insert as a string in the key
 
-          res.send('fine');
           const profilePicture = {
             Bucket: `${BUCKET_NAME}/profile_picture`,
             Key: `${req.userInfo.id}`,
@@ -291,11 +322,14 @@ router.patch(
             if (error) {
               console.log(error);
             } else {
-              console.log('aws');
-              console.log(data.Location);
-              await Candidate.findByIdAndUpdate(req.userInfo.id, {
-                profilePhoto: data.Location,
-              });
+              const updated = await Candidate.findByIdAndUpdate(
+                req.userInfo.id,
+                {
+                  profilePhoto: data.Location,
+                },
+                { new: true }
+              );
+              res.status(202).send(updated);
             }
           });
         }

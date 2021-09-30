@@ -7,3 +7,9 @@ export const documentCandidate = upload.fields([
 ]);
 const imgUpload = multer({ storage: storage, limits: { fileSize: 4242880 } });
 export const imageUpload = imgUpload.single('image');
+
+const vidUpload = multer({
+  storage: storage,
+  limits: { fileSize: 20971520 },
+});
+export const videoUpload = vidUpload.single('video');
