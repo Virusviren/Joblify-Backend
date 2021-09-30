@@ -1,5 +1,10 @@
 import express from 'express';
-import { BUCKET_NAME, cpUpload, s3, upload } from '../../aws-storage/index.js';
+import multer from 'multer';
+import { BUCKET_NAME, s3 } from '../../aws-storage/awsconfig.js';
+import {
+  documentCandidate,
+  imageUpload,
+} from '../../middlewares/multerFileCheck.js';
 import { authCandidate } from '../../middlewares/auth.js';
 import Candidate from '../../models/Candidate.js';
 import mongoose from 'mongoose';
@@ -263,10 +268,42 @@ router.patch('/profile/edit/files/:filetype', authCandidate, (req, res) => {
 router.patch(
   '/profile/edit/profile-photo',
   authCandidate,
-  upload.single('Image'),
+
   async (req, res) => {
-    console.log(req);
-    res.send('Edit  profile photo');
+    try {
+      imageUpload(req, res, async (err) => {
+        if (err instanceof multer.MulterError) {
+          console.log(err.message);
+          res.status(413).send('PayLoad Too Large');
+        } else {
+          console.log(req.file);
+          const { buffer, mimetype } = req.file;
+          const fileType = mimetype.split('/').pop(); // if wants to specify the type of the file in the aws. insert as a string in the key
+
+          res.send('fine');
+          const profilePicture = {
+            Bucket: `${BUCKET_NAME}/profile_picture`,
+            Key: `${req.userInfo.id}`,
+            Body: buffer,
+            ACL: 'public-read',
+          };
+          await s3.upload(profilePicture, async (error, data) => {
+            if (error) {
+              console.log(error);
+            } else {
+              console.log('aws');
+              console.log(data.Location);
+              await Candidate.findByIdAndUpdate(req.userInfo.id, {
+                profilePhoto: data.Location,
+              });
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send('Internal Server Error');
+    }
   }
 );
 
@@ -286,7 +323,7 @@ router.get('/applications', authCandidate, (req, res) => {
   res.send('Get the list of the job where the candidate applied');
 });
 
-router.post('/aws-test', cpUpload, async (req, res) => {
+router.post('/aws-test', documentCandidate, async (req, res) => {
   //const { coverLetter, cv } = req.files;
 
   if (req.files !== undefined) {

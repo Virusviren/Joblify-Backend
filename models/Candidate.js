@@ -33,7 +33,7 @@ const CandidateSchema = mongoose.Schema({
   documents: [{ cv: String, coverLetter: String }],
   infoVideo: String,
   profilePhoto: String,
-  profilePhoto: String,
+
   appliedJobs: [{ applicationId: String, jobId: String }],
 });
 
