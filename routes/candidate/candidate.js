@@ -505,13 +505,9 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
             },
           };
 
-          const updated = await Candidate.findByIdAndUpdate(
-            req.userInfo.id,
-            updates,
-            {
-              new: true,
-            }
-          );
+          await Candidate.findByIdAndUpdate(req.userInfo.id, updates, {
+            new: true,
+          });
         });
         await Job.findByIdAndUpdate(req.params.jobId, {
           $push: { candidates: req.userInfo.id },

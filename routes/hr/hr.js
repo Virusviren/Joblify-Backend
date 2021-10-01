@@ -91,7 +91,20 @@ router.post(
         hrId: req.userInfo.id,
         candidates: [],
       });
-      await newJob.save();
+      await newJob.save(async (err, job) => {
+        console.log(job.id);
+
+        let updates = {
+          $push: {
+            jobsPosted: job.id,
+          },
+        };
+        console.log(req.userInfo.id);
+
+        await Hr.findByIdAndUpdate(req.userInfo.id, updates, {
+          new: true,
+        });
+      });
       res.send('new Job Posted');
     } catch (error) {
       console.log(error.message);
