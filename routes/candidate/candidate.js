@@ -1,15 +1,18 @@
+'use strict';
 import express from 'express';
 import multer from 'multer';
 import { BUCKET_NAME, s3 } from '../../aws-storage/awsconfig.js';
 import {
+  coverLetterUpload,
+  cvUpload,
   documentCandidate,
   imageUpload,
   videoUpload,
 } from '../../middlewares/multerFileCheck.js';
 import { authCandidate } from '../../middlewares/auth.js';
 import Candidate from '../../models/Candidate.js';
-import mongoose from 'mongoose';
-
+import Application from '../../models/Application.js';
+import Job from '../../models/Job.js';
 const router = express.Router();
 
 // Get profile details (get personal info) (get)
@@ -57,7 +60,7 @@ router.patch(
 //Add education (post)
 router.post('/profile/edit-education', authCandidate, async (req, res) => {
   try {
-    let { level, universityName, startingDate, id, endingDate } = req.body;
+    let { level, universityName, startingDate, endingDate } = req.body;
     let docId = req.userInfo.id;
     console.log(req.userInfo);
     let updates = {
@@ -77,7 +80,7 @@ router.post('/profile/edit-education', authCandidate, async (req, res) => {
     console.log(updated);
     res.status(202).send(updated);
   } catch (error) {
-    console.log(error.message);
+    console.log(error);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -262,7 +265,7 @@ router.patch('/profile/edit/video', authCandidate, async (req, res) => {
       } else {
         const { buffer } = req.file;
         const profileVideo = {
-          Bucket: `${BUCKET_NAME}/profile_video`,
+          Bucket: `${BUCKET_NAME}/Candidate/profile_video`,
           Key: `${req.userInfo.id}`,
           Body: buffer,
           ACL: 'public-read',
@@ -289,11 +292,64 @@ router.patch('/profile/edit/video', authCandidate, async (req, res) => {
   }
 });
 
-// Edit files (patch)
-router.patch('/profile/edit/files/:filetype', authCandidate, (req, res) => {
-  res.send(
-    'edit the file of the candidate depending on the filetype (CV/CoverLetter) '
-  );
+// Edit CV (patch)
+router.patch('/profile/edit/cv', authCandidate, (req, res) => {
+  cvUpload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      console.log(err.message);
+      res.status(413).send('PayLoad Too Large');
+    } else {
+      const { buffer } = req.file;
+      const cv = {
+        Bucket: `${BUCKET_NAME}/Candidate/cvs`,
+        Key: `${req.userInfo.id}.pdf`,
+        Body: buffer,
+        ACL: 'public-read',
+      };
+      await s3.upload(cv, async (error, data) => {
+        if (error) {
+          console.log(error);
+        } else {
+          const updated = await Candidate.findByIdAndUpdate(
+            req.userInfo.id,
+            { cv: data.Location },
+            { new: true }
+          );
+          res.status(202).send(updated);
+        }
+      });
+    }
+  });
+});
+
+// Edit CoverLetter (patch)
+router.patch('/profile/edit/coverLetter', authCandidate, async (req, res) => {
+  coverLetterUpload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      console.log(err.message);
+      res.status(413).send('PayLoad Too Large');
+    } else {
+      const { buffer } = req.file;
+      const coverLetter = {
+        Bucket: `${BUCKET_NAME}/Candidate/coverLetters`,
+        Key: `${req.userInfo.id}.pdf`,
+        Body: buffer,
+        ACL: 'public-read',
+      };
+      await s3.upload(coverLetter, async (error, data) => {
+        if (error) {
+          console.log(error);
+        } else {
+          const updated = await Candidate.findByIdAndUpdate(
+            req.userInfo.id,
+            { coverLetter: data.Location },
+            { new: true }
+          );
+          res.status(202).send(updated);
+        }
+      });
+    }
+  });
 });
 
 // Edit image (patch)
@@ -313,7 +369,7 @@ router.patch(
           const fileType = mimetype.split('/').pop(); // if wants to specify the type of the file in the aws. insert as a string in the key
 
           const profilePicture = {
-            Bucket: `${BUCKET_NAME}/profile_picture`,
+            Bucket: `${BUCKET_NAME}/Candidate/profile_picture`,
             Key: `${req.userInfo.id}`,
             Body: buffer,
             ACL: 'public-read',
@@ -342,8 +398,135 @@ router.patch(
 );
 
 // Submit application (post)
-router.post('/submit/', authCandidate, (req, res) => {
-  res.send('Application submit by the candidate');
+router.post('/submit/:jobId', authCandidate, async (req, res) => {
+  try {
+    let videoUrl = '';
+    let cvUrl = '';
+    let coverLetterUrl = '';
+
+    documentCandidate(req, res, async (err) => {
+      // console.log(req.body.data);
+      let newData = req.body.data;
+      let data = JSON.parse(newData);
+      console.log(data);
+      try {
+        if (err instanceof multer.MulterError) {
+          console.log(err.message);
+          res.status(413).send('PayLoad Too Large');
+        } else {
+          let videoBuffer = req.files.video[0].buffer;
+          let cvBuffer = req.files.cv[0].buffer;
+
+          let coverLetterBuffer = Buffer.from(req.files.coverLetter[0].buffer);
+
+          const asyncS3Upload = (S3Config) =>
+            new Promise((res, rej) =>
+              s3.upload(S3Config, (error, data) => {
+                if (error) rej(err);
+                else res(data.Location);
+              })
+            );
+          //Upload CoverLetter to AWS S3
+
+          const coverLetter = {
+            Bucket: `${BUCKET_NAME}/Applications/coverLetters`,
+            Key: `${req.userInfo.id}.pdf`,
+            Body: coverLetterBuffer,
+            ACL: 'public-read',
+          };
+
+          coverLetterUrl = await asyncS3Upload(coverLetter);
+
+          //Upload Video to AWS S3
+          let videoBinary = Buffer.from(videoBuffer, 'binary');
+          const video = {
+            Bucket: `${BUCKET_NAME}/Applications/videos`,
+            Key: `${req.userInfo.id}`,
+            Body: videoBinary,
+            ACL: 'public-read',
+          };
+
+          videoUrl = await asyncS3Upload(video);
+
+          //Upload Cv to AWS S3
+          const cv = {
+            Bucket: `${BUCKET_NAME}/Applications/cvs`,
+            Key: `${req.userInfo.id}.pdf`,
+            Body: cvBuffer,
+            ACL: 'public-read',
+          };
+
+          cvUrl = await asyncS3Upload(cv);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+
+      // Mongodb query
+      try {
+        //   console.log(data);
+        let getEducationArray = (data) => {
+          return data.education.map((educationItem) => educationItem);
+        };
+        let getWorkExperienceArray = (data) => {
+          return data.workExperience.map(
+            (workExperienceItem) => workExperienceItem
+          );
+        };
+        // console.log(data.education);
+
+        let newApplication = new Application({
+          candidateId: req.userInfo.id,
+          jobId: req.params.jobId,
+          personalInfo: {
+            name: data.personalInfo.name,
+            surname: data.personalInfo.surname,
+            dateOfBirth: data.personalInfo.dateOfBirth,
+            citizenship: data.personalInfo.citizenship,
+            address: data.personalInfo.address,
+            mobileNumber: data.personalInfo.mobileNumber,
+          },
+          education: getEducationArray(data),
+
+          workExperience: getWorkExperienceArray(data),
+          skills: data.skills,
+          email: data.email,
+          cv: cvUrl,
+          coverLetter: coverLetterUrl,
+          infoVideo: videoUrl,
+        });
+        await newApplication.save(async (err, application) => {
+          let updates = {
+            $push: {
+              appliedJobs: {
+                applicationId: application.id,
+                jobId: req.params.jobId,
+              },
+            },
+          };
+
+          const updated = await Candidate.findByIdAndUpdate(
+            req.userInfo.id,
+            updates,
+            {
+              new: true,
+            }
+          );
+        });
+        await Job.findByIdAndUpdate(req.params.jobId, {
+          $push: { candidates: req.userInfo.id },
+        });
+
+        res.send('Application Submitted');
+      } catch (error) {
+        console.log(error.message);
+        res.status(500).send('Server Error');
+      }
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // Withdraw application (patch)
@@ -355,65 +538,6 @@ router.patch('/withdraw/:applicationId', authCandidate, (req, res) => {
 
 router.get('/applications', authCandidate, (req, res) => {
   res.send('Get the list of the job where the candidate applied');
-});
-
-router.post('/aws-test', documentCandidate, async (req, res) => {
-  //const { coverLetter, cv } = req.files;
-
-  if (req.files !== undefined) {
-    req.files.coverLetter !== undefined &&
-      req.files.cv !== undefined &&
-      console.log('there are files');
-    console.log(req.body.name);
-  } else {
-    console.log('no files');
-  }
-
-  // if (req.files.coverLetter !== undefined || req.files.cv !== undefined) {
-  //   console.log('there are files');
-  // } else {
-  //   console.log('there are no files');
-  // }
-
-  // if (coverLetter && cv) {
-  //   const coverLetterBuffer = coverLetter[0].buffer;
-  //   const cvBuffer = cv[0].buffer;
-  //   const coverLetterParams = {
-  //     Bucket: `${BUCKET_NAME}/coverLetters`,
-  //     Key: 'coverLetter.pdf',
-  //     Body: coverLetterBuffer,
-  //     ACL: 'public-read',
-  //   };
-  //   const cvParams = {
-  //     Bucket: `${BUCKET_NAME}/cvs`,
-  //     Key: 'cv.pdf',
-  //     Body: cvBuffer,
-  //     ACL: 'public-read',
-  //   };
-
-  //   await s3.upload(coverLetterParams, function (err, data) {
-  //     if (err) {
-  //       res.json({ error: true, Message: err });
-  //     } else {
-  //       console.log(`File uploaded successfully. ${data.Location}`);
-  //     }
-  //   });
-  //   await s3.upload(cvParams, function (err, data) {
-  //     if (err) {
-  //       res.json({ error: true, Message: err });
-  //     } else {
-  //       console.log(`File uploaded successfully. ${data.Location}`);
-  //     }
-  //   });
-  // } else if (coverLetter) {
-  //   const coverLetterBuffer = coverLetter[0].buffer;
-  //   console.log('cover');
-  //   console.log(coverLetterBuffer);
-  // } else if (cv) {
-  //   const cvBuffer = cv[0].buffer;
-  //   console.log('cv');
-  //   console.log(cvBuffer);
-  // }
 });
 
 export default router;

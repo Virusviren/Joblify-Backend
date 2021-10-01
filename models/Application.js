@@ -1,49 +1,44 @@
 import mongoose from 'mongoose';
-import Candidate from './Candidate';
-import Job from './Job';
+import Candidate from './Candidate.js';
+import Job from './Job.js';
 
 const ApplicationSchema = mongoose.Schema({
-  applicationId: { type: String, required: true },
   candidateId: { type: mongoose.ObjectId, ref: Candidate },
   jobId: { type: mongoose.ObjectId, ref: Job },
-  status: String,
-  details: {
-    personalInfo: {
-      name: { type: String, required: true },
-      surname: { type: String, required: true },
-      dateOfBirth: { type: Date, required: true },
-      citizenship: { type: String, required: true },
-      address: { type: String, required: true },
-      mobileNumber: { type: String, required: true },
-    },
-    education: [
-      {
-        level: { type: String, required: true },
-        universityName: { type: String, required: true },
-        startingDate: { type: Date, required: true },
-        endingDate: { type: Date, required: true },
-      },
-    ],
-    workExperience: [
-      {
-        companyName: String,
-        position: String,
-        startingDate: Date,
-        endingDate: Date,
-        description: String,
-      },
-    ],
-    skills: [String],
-    documents: [
-      {
-        cv: { type: String, required: true },
-        coverLetter: { type: String, required: true },
-      },
-    ],
-    infoVideo: String,
-    profilePhoto: String,
-    email: { type: String, required: true },
+  status: { type: Number, default: 1 },
+
+  personalInfo: {
+    name: { type: String, required: true },
+    surname: { type: String, required: true },
+    dateOfBirth: { type: String, required: true },
+    citizenship: { type: String, required: true },
+    address: { type: String, required: true },
+    mobileNumber: { type: String, required: true },
   },
+  education: [
+    {
+      level: { type: String, required: true },
+      universityName: { type: String, required: true },
+      startingDate: { type: String, required: true },
+      endingDate: { type: String, required: true },
+    },
+  ],
+  workExperience: [
+    {
+      companyName: String,
+      position: String,
+      startingDate: String,
+      endingDate: String,
+      description: String,
+    },
+  ],
+  skills: [String],
+
+  email: { type: String, required: true },
+
+  cv: String,
+  coverLetter: String,
+  infoVideo: String,
 });
 
 const Application = mongoose.model('Application', ApplicationSchema);
