@@ -517,7 +517,7 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
           $push: { candidates: req.userInfo.id },
         });
 
-        res.send('Application Submitted');
+        res.status(200).send('Application Submitted');
       } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
@@ -530,8 +530,16 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
 });
 
 // Withdraw application (patch)
-router.patch('/withdraw/:applicationId', authCandidate, (req, res) => {
-  res.send('Withdraw the application');
+router.patch('/withdraw/:applicationId', authCandidate, async (req, res) => {
+  try {
+    await Application.findByIdAndUpdate(req.params.applicationId, {
+      $set: { status: 5 },
+    });
+    res.status(200).send('Appliction withdrawn');
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 //Get all applications (get)
