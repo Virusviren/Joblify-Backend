@@ -1,4 +1,3 @@
-'use strict';
 import express from 'express';
 import multer from 'multer';
 import { BUCKET_NAME, s3 } from '../../aws-storage/awsconfig.js';

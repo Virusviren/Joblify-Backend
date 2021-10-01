@@ -4,6 +4,9 @@ import { authHr } from '../../middlewares/auth.js';
 import Hr from '../../models/Hr.js';
 import Job from '../../models/Job.js';
 import Application from '../../models/Application.js';
+import { imageUpload } from '../../middlewares/multerFileCheck.js';
+import multer from 'multer';
+import { BUCKET_NAME, s3 } from '../../aws-storage/awsconfig.js';
 const router = express.Router();
 
 // Get profile details (get personal info) (get)
@@ -39,7 +42,41 @@ router.patch('/profile/edit', authHr, async (req, res) => {
 // Edit image (personal info) (patch)
 
 router.patch('/profile-photo/edit', authHr, async (req, res) => {
-  res.send('Edit the image url of the HR from cloudinary');
+  try {
+    imageUpload(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+        console.log(err.message);
+        res.status(413).send('PayLoad Too Large');
+      } else {
+        const { buffer, mimetype } = req.file;
+        const fileType = mimetype.split('/').pop(); // if wants to specify the type of the file in the aws. insert as a string in the key
+
+        const profilePicture = {
+          Bucket: `${BUCKET_NAME}/Hr/profile_picture`,
+          Key: `${req.userInfo.id}`,
+          Body: buffer,
+          ACL: 'public-read',
+        };
+        await s3.upload(profilePicture, async (error, data) => {
+          if (error) {
+            console.log(error);
+          } else {
+            const updated = await Hr.findByIdAndUpdate(
+              req.userInfo.id,
+              {
+                profilePhoto: data.Location,
+              },
+              { new: true }
+            );
+            res.status(202).send(updated);
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // Get all posted jobs (get)
