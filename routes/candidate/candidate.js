@@ -544,8 +544,16 @@ router.patch('/withdraw/:applicationId', authCandidate, async (req, res) => {
 
 //Get all applications (get)
 
-router.get('/applications', authCandidate, (req, res) => {
-  res.send('Get the list of the job where the candidate applied');
+router.get('/applications', authCandidate, async (req, res) => {
+  try {
+    const applications = await Application.find({
+      candidateId: req.userInfo.id,
+    });
+    res.status(200).send(applications);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 export default router;

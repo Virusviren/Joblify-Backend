@@ -125,12 +125,13 @@ router.post(
       // Salting and hashing the password before saving it to database
       const salt = await bcrypt.genSalt(10);
       candidate.password = await bcrypt.hash(password, salt);
-      await candidate.save();
+      const user = await candidate.save();
 
       // Creating and Sending the Jwt token for verification
       const payload = {
-        candidate: {
-          id: candidate.id,
+        userInfo: {
+          id: user.id,
+          type: 'Candidate',
         },
       };
       jwt.sign(
