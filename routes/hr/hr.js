@@ -3,6 +3,7 @@ import { check, validationResult } from 'express-validator';
 import { authHr } from '../../middlewares/auth.js';
 import Hr from '../../models/Hr.js';
 import Job from '../../models/Job.js';
+import Application from '../../models/Application.js';
 const router = express.Router();
 
 // Get profile details (get personal info) (get)
@@ -191,8 +192,30 @@ router.delete('/job/:jobId', authHr, async (req, res) => {
 
 // Proceed to next round (patch)
 
-router.patch('/stage/:applicationId', authHr, (req, res) => {
-  res.send('Send the candidate to the next round');
+router.patch('/stage/:applicationId', authHr, async (req, res) => {
+  try {
+    let { newStatus } = req.body;
+    await Application.findByIdAndUpdate(req.params.applicationId, {
+      $set: { status: newStatus },
+    });
+    res.status(200).send('Proceeded to next round');
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
+// Reject application (patch)
+
+router.patch('/reject/:applicationId', authHr, async (req, res) => {
+  try {
+    await Application.findByIdAndUpdate(req.params.applicationId, {
+      $set: { status: 0 },
+    });
+    res.status(200).send('Application Rejected');
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
+});
 export default router;
