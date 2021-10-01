@@ -508,9 +508,9 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
           await Candidate.findByIdAndUpdate(req.userInfo.id, updates, {
             new: true,
           });
-        });
-        await Job.findByIdAndUpdate(req.params.jobId, {
-          $push: { candidates: req.userInfo.id },
+          await Job.findByIdAndUpdate(req.params.jobId, {
+            $push: { applicationsReceived: application.id },
+          });
         });
 
         res.status(200).send('Application Submitted');

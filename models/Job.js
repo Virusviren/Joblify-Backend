@@ -16,7 +16,10 @@ const JobSchema = mongoose.Schema({
   type: { type: String, required: true },
   salary: { type: String, required: true },
   hrId: { type: String, required: true },
-  candidates: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Candidate' }],
+
+  applicationsReceived: [
+    { type: mongoose.Schema.Types.ObjectId, ref: 'Application' },
+  ],
 });
 
 const Job = mongoose.model('Job', JobSchema);

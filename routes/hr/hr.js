@@ -218,4 +218,16 @@ router.patch('/reject/:applicationId', authHr, async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+// Get all applications by JobId
+router.get('/allApplications/:jobId', authHr, async (req, res) => {
+  try {
+    const allApplications = await Application.find({ jobId: req.params.jobId });
+    res.status(200).send(allApplications);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 export default router;
