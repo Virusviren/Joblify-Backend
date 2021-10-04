@@ -1,5 +1,6 @@
 import express from 'express';
 // import dotenv from 'dotenv';
+import cors from 'cors';
 import listEndPoints from 'express-list-endpoints';
 import admin from './routes/admin/admin.js';
 import authentication from './routes/authentication/authentication.js';
@@ -9,7 +10,8 @@ import jobs from './routes/jobs/jobs.js';
 import connectDB from './db.js';
 
 const app = express();
-
+app.use(cors());
+app.options('*', cors());
 connectDB();
 
 // Init MiddleWare
