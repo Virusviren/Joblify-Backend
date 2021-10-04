@@ -1,7 +1,7 @@
 import express from 'express';
 // import dotenv from 'dotenv';
 import cors from 'cors';
-import listEndPoints from 'express-list-endpoints';
+// import listEndPoints from 'express-list-endpoints';
 import admin from './routes/admin/admin.js';
 import authentication from './routes/authentication/authentication.js';
 import candidate from './routes/candidate/candidate.js';
@@ -25,6 +25,6 @@ app.use('/api/v1/candidate', candidate); // done
 app.use('/api/v1/hr', hr); //done
 app.use('/api/v1/', jobs); //done
 
-console.table(listEndPoints(app));
+// console.table(listEndPoints(app));
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server Started on port ${PORT}`));
