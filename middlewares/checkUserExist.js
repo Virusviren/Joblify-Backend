@@ -10,7 +10,7 @@ export const IsHR = async (req, res, next) => {
     if (!hr) {
       next();
     } else {
-      res.send('User Exists as HR');
+      res.status(400).send('User Exists as HR');
     }
   } catch (error) {
     next(err);
@@ -23,7 +23,7 @@ export const IsUser = async (req, res, next) => {
     if (!candidate) {
       next();
     } else {
-      res.send('User Exists');
+      res.status(400).send('userExist');
     }
   } catch (error) {
     next(err);
@@ -36,7 +36,7 @@ export const AdminExist = async (req, res, next) => {
     if (!admin) {
       next();
     } else {
-      res.send('admin exist');
+      res.status(400).send('admin exist');
     }
   } catch (error) {
     next(error);
