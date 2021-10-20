@@ -80,10 +80,10 @@ router.post(
             }
           );
         } else {
-          res.send('Password Incorrect');
+          res.status(401).send('Password Incorrect');
         }
       } else {
-        res.send('No User not found');
+        res.status(400).send('No User not found');
       }
     } catch (error) {
       console.log(error.message);
