@@ -56,7 +56,7 @@ router.post(
             }
           );
         } else {
-          res.send('Password Incorrect');
+          res.status(401).send('Password Incorrect');
         }
       } else if (typeOfUser === 'Hr') {
         let user = await Hr.findOne({ email: email });
