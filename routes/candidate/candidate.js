@@ -384,6 +384,9 @@ router.patch(
                 },
                 { new: true }
               );
+              console.log(req.userInfo.id);
+              console.log(data.Location);
+              console.log(updated);
               res.status(202).send(updated);
             }
           });
@@ -407,7 +410,13 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
       // console.log(req.body.data);
       let newData = req.body.data;
       let data = JSON.parse(newData);
-      console.log(data);
+      // console.log(data);
+
+      let jobToFind = await Job.findById(req.params.jobId);
+      let jobName = jobToFind.jobId;
+      let companyName = jobToFind.details.companyInfo.name;
+
+      console.log(companyName);
       try {
         if (err instanceof multer.MulterError) {
           console.log(err.message);
@@ -477,6 +486,8 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
         let newApplication = new Application({
           candidateId: req.userInfo.id,
           jobId: req.params.jobId,
+          jobTitle: jobName,
+          jobCompanyName: companyName,
           personalInfo: {
             name: data.personalInfo.name,
             surname: data.personalInfo.surname,
