@@ -303,6 +303,7 @@ router.patch('/profile/edit/cv', authCandidate, (req, res) => {
         Bucket: `${BUCKET_NAME}/Candidate/cvs`,
         Key: `${req.userInfo.id}.pdf`,
         Body: buffer,
+        ContentType: 'application/pdf',
         ACL: 'public-read',
       };
       await s3.upload(cv, async (error, data) => {
@@ -333,6 +334,7 @@ router.patch('/profile/edit/coverLetter', authCandidate, async (req, res) => {
         Bucket: `${BUCKET_NAME}/Candidate/coverLetters`,
         Key: `${req.userInfo.id}.pdf`,
         Body: buffer,
+        ContentType: 'application/pdf',
         ACL: 'public-read',
       };
       await s3.upload(coverLetter, async (error, data) => {
@@ -415,8 +417,9 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
       let jobToFind = await Job.findById(req.params.jobId);
       let jobName = jobToFind.jobId;
       let companyName = jobToFind.details.companyInfo.name;
-
-      console.log(companyName);
+      let candidateDetail = await Candidate.findById(req.userInfo.id);
+      let candidateProfilePic = candidateDetail.profilePhoto;
+      console.log(candidateProfilePic);
       try {
         if (err instanceof multer.MulterError) {
           console.log(err.message);
@@ -440,6 +443,7 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
             Bucket: `${BUCKET_NAME}/Applications/coverLetters`,
             Key: `${req.userInfo.id}.pdf`,
             Body: coverLetterBuffer,
+            ContentType: 'application/pdf',
             ACL: 'public-read',
           };
 
@@ -451,6 +455,7 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
             Bucket: `${BUCKET_NAME}/Applications/videos`,
             Key: `${req.userInfo.id}`,
             Body: videoBinary,
+
             ACL: 'public-read',
           };
 
@@ -461,6 +466,7 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
             Bucket: `${BUCKET_NAME}/Applications/cvs`,
             Key: `${req.userInfo.id}.pdf`,
             Body: cvBuffer,
+            ContentType: 'application/pdf',
             ACL: 'public-read',
           };
 
@@ -482,11 +488,16 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
           );
         };
         // console.log(data.education);
+        let profilePic = '';
+        if (candidateProfilePic) {
+          profilePic = candidateProfilePic;
+        }
 
         let newApplication = new Application({
           candidateId: req.userInfo.id,
           jobId: req.params.jobId,
           jobTitle: jobName,
+          candidateProfilePic: profilePic,
           jobCompanyName: companyName,
           personalInfo: {
             name: data.personalInfo.name,
