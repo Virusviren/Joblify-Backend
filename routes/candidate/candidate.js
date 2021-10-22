@@ -552,7 +552,12 @@ router.patch('/withdraw/:applicationId', authCandidate, async (req, res) => {
     await Application.findByIdAndUpdate(req.params.applicationId, {
       $set: { status: 5 },
     });
-    res.status(200).send('Appliction withdrawn');
+    const application = await Application.findById(req.params.applicationId);
+    const jobId = application.jobId;
+    await Job.findByIdAndUpdate(jobId, {
+      $pull: { applicationsReceived: req.params.applicationId },
+    });
+    res.status(200).send('Application withdrawn');
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
