@@ -369,29 +369,44 @@ router.patch(
           const { buffer, mimetype } = req.file;
           const fileType = mimetype.split('/').pop(); // if wants to specify the type of the file in the aws. insert as a string in the key
 
+          const asyncS3Upload = (S3Config) =>
+            new Promise((res, rej) =>
+              s3.upload(S3Config, (error, data) => {
+                if (error) rej(err);
+                else res(data.Location);
+              })
+            );
           const profilePicture = {
             Bucket: `${BUCKET_NAME}/Candidate/profile_picture`,
             Key: `${req.userInfo.id}`,
             Body: buffer,
             ACL: 'public-read',
           };
-          await s3.upload(profilePicture, async (error, data) => {
-            if (error) {
-              console.log(error);
-            } else {
-              const updated = await Candidate.findByIdAndUpdate(
-                req.userInfo.id,
-                {
-                  profilePhoto: data.Location,
-                },
-                { new: true }
-              );
-              console.log(req.userInfo.id);
-              console.log(data.Location);
-              console.log(updated);
-              res.status(202).send(updated);
-            }
-          });
+
+          const editedPic = await asyncS3Upload(profilePicture);
+          console.log(editedPic);
+          if (editedPic) {
+            console.log(editedPic);
+            const updated = await Candidate.findByIdAndUpdate(
+              req.userInfo.id,
+              {
+                profilePhoto: editedPic,
+              },
+              { new: true }
+            );
+            console.log(req.userInfo.id);
+
+            console.log(updated);
+            res.status(200).send(updated);
+          } else {
+            console.log(error);
+          }
+
+          // await s3.upload(profilePicture, async (error, data) => {
+          //   if (error) {
+          //   } else {
+          //   }
+          // });
         }
       });
     } catch (error) {
