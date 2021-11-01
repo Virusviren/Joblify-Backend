@@ -15,7 +15,7 @@ router.get('/profile', authHr, async (req, res) => {
   if (hrDetails) {
     res.send(hrDetails);
   } else {
-    res.send('No user found');
+    res.send(500).send('error');
   }
 });
 
@@ -119,7 +119,7 @@ router.post(
     }
     try {
       let newJob = new Job({
-        jobId: title,
+        jobTitle: title,
         overview: overview,
         requirements: requirements,
         experience: experience,
@@ -257,9 +257,10 @@ router.patch('/reject/:applicationId', authHr, async (req, res) => {
 });
 
 // Get all applications by JobId
-router.get('/allApplications/:jobId', authHr, async (req, res) => {
+router.get('/allApplications', authHr, async (req, res) => {
+  console.log(req.userInfo);
   try {
-    const allApplications = await Application.find({ jobId: req.params.jobId });
+    const allApplications = await Application.find({ hrId: req.userInfo.id });
     res.status(200).send(allApplications);
   } catch (error) {
     console.log(error.message);

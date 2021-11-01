@@ -259,7 +259,7 @@ router.patch('/profile/edit/video', authCandidate, async (req, res) => {
   try {
     videoUpload(req, res, async (err) => {
       if (err instanceof multer.MulterError) {
-        console.log(err.message);
+        console.log(err);
         res.status(413).send('PayLoad Too Large');
       } else {
         const { buffer } = req.file;
@@ -295,7 +295,6 @@ router.patch('/profile/edit/video', authCandidate, async (req, res) => {
 router.patch('/profile/edit/cv', authCandidate, (req, res) => {
   cvUpload(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
-      console.log(err.message);
       res.status(413).send('PayLoad Too Large');
     } else {
       const { buffer } = req.file;
@@ -430,7 +429,11 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
       // console.log(data);
 
       let jobToFind = await Job.findById(req.params.jobId);
-      let jobName = jobToFind.jobId;
+
+      let jobName = jobToFind.jobTitle;
+      console.log(jobName);
+      let hrIdForApplication = jobToFind.hrId;
+
       let companyName = jobToFind.details.companyInfo.name;
       let candidateDetail = await Candidate.findById(req.userInfo.id);
       let candidateProfilePic = candidateDetail.profilePhoto;
@@ -510,6 +513,7 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
 
         let newApplication = new Application({
           candidateId: req.userInfo.id,
+          hrId: hrIdForApplication,
           jobId: req.params.jobId,
           jobTitle: jobName,
           candidateProfilePic: profilePic,
@@ -527,11 +531,14 @@ router.post('/submit/:jobId', authCandidate, async (req, res) => {
           workExperience: getWorkExperienceArray(data),
           skills: data.skills,
           email: data.email,
+
           cv: cvUrl,
           coverLetter: coverLetterUrl,
           infoVideo: videoUrl,
         });
         await newApplication.save(async (err, application) => {
+          console.log(application);
+          console.log(err);
           let updates = {
             $push: {
               appliedJobs: {
