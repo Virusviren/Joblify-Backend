@@ -6,6 +6,7 @@ const ApplicationSchema = mongoose.Schema(
   {
     candidateId: { type: mongoose.ObjectId, ref: Candidate },
     jobId: { type: mongoose.ObjectId, ref: Job },
+    hrId: { type: String, required: true },
     jobTitle: { type: String, required: true },
     candidateProfilePic: String,
     status: { type: Number, default: 1 },
