@@ -23,11 +23,12 @@ router.get('/profile', authHr, async (req, res) => {
 router.patch('/profile/edit', authHr, async (req, res) => {
   try {
     const id = req.userInfo.id;
-    const { name, surname } = req.body;
+    const { name, surname, mobileNumber } = req.body;
     const updates = {
       personalInfo: {
         name: name,
         surname: surname,
+        mobileNumber: mobileNumber,
       },
     };
     const updated = await Hr.findByIdAndUpdate(id, updates, {
@@ -35,7 +36,8 @@ router.patch('/profile/edit', authHr, async (req, res) => {
     });
     res.send(updated);
   } catch (error) {
-    res.send(500).send({ message: error.message });
+    console.log(error);
+    res.sendStatus(500).send({ message: error.message });
   }
 });
 
@@ -115,6 +117,7 @@ router.post(
     } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log(errors);
       return res.status(400).json({ errors: errors.array() });
     }
     try {
